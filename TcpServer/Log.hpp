@@ -43,6 +43,8 @@ public:
             close(logFd);
         }
     }
+
+
 private:
     int logFd;
 };

@@ -36,6 +36,22 @@ public:
         if(listenSock_ >= 0)
             close(listenSock_);
     }
+
+public:
+    void init()
+    {
+        listenSock_ = socket(PF_INET,SOCK_STREAM,0);
+        if(listenSock_ < 0)
+        {
+            logMessage(FATAL, "socket: %s", strerror(errno));
+            exit(SOCKET_ERR);
+        }
+        logMessage(DEBUG, "socket: %s, %d", strerror(errno), listenSock_);
+        
+        struct sockaddr_in local;
+        memset(&local,0,sizeof local);
+
+    }
 private:
     int listenSock_;
     uint16_t port_;

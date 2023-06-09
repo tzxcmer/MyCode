@@ -8,11 +8,20 @@
 #include<sys/types.h>
 #include<sys/wait.h>
 #include<pthread.h>
+#include<assert.h>
 
 
 void netCal(int sock, const std::string &clientIp, uint16_t clientPort)
 {
+    assert(sock >= 0);
+    assert(!clientIp.empty());
+    assert(clientPort >= 1024);
 
+    std::string inbuffer;
+    while(true)
+    {
+        
+    }
 }
 
 class SeverTcp;

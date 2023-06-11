@@ -116,11 +116,26 @@ public:
         op_ = oper[0];
 
 #else
-
+        Json::Value root;
+        Json::Reader rd;
+        rd.parse(in,root);
+        x_ = root["x"].asInt();
+        y_ = root["y"].asInt();
+        op_ = root["op"].asInt();
 
 #endif
 
         return true;
+    }
+
+
+    void debug()
+    {
+        std::cout << "#################################" << std::endl;
+        std::cout << "x_: " << x_ << std::endl;
+        std::cout << "op_: " << op_ << std::endl;
+        std::cout << "y_: " << y_ << std::endl;
+        std::cout << "#################################" << std::endl;
     }
 
 
@@ -131,17 +146,87 @@ public:
 };
 
 
-class Response
-{
-private:
-    /* data */
+class Response{
 public:
-    Response(/* args */);
-    ~Response();
+    Response():exitCode_(0),result_(0)
+    {}
+    ~Response()
+    {}
+
+public:
+    void serialize(std::string *out)
+    {
+#ifdef MY_SELF
+        std::string ec = std::to_string(exitCode_);
+        std::string res = std::to_string(result_);
+
+        *out += ec;
+        *out += SPACE;
+        *out += res;
+#else
+        Json::Value root;
+        root["exitcode"] = exitCode_;
+        root["result"] = result_;
+        Json::FastWriter fw;
+        fw.write(root);
+
+#endif
+    }
+
+    bool deserialize(const std::string& in)
+    {
+#ifdef MY_SELF
+        std::size_t pos = in.find(SPACE);
+        if(std::string::npos == pos)
+        {
+            return false;
+        }
+
+        std::string codestr = in.substr(0,pos);
+        std::string reststr = in.substr(pos+SPACE_LEN);
+
+        exitCode_ = atoi(codestr.c_str());
+        result_ = atoi(reststr.c_str());
+
+#else
+        Json::Value root;
+        Json::Reader rd;
+        rd.parse(in,root);
+        exitCode_ = root["exitcode"].asInt();
+        result_ = root["result"].asInt();
+#endif
+        return true;
+    }
+
+     void debug()
+    {
+        std::cout << "#################################" << std::endl;
+        std::cout << "exitCode_: " << exitCode_ << std::endl;
+        std::cout << "result_: " << result_ << std::endl;
+        std::cout << "#################################" << std::endl;
+    }
+
+public:
+    int exitCode_;//退出码
+    int result_;//结果
 };
 
 
 bool makeRequest(const std::string &str,Request *req)
 {
+    char strtmp[BUFFER_SIZE];
+    snprintf(strtmp,sizeof strtmp,"%s",str.c_str());
+    char *left = strtok(strtmp,OPS);
+    if(!left)
+        return false;
+    char *right = strtok(nullptr,OPS);
+    if(!right)
+        return false;
+    char mid = str[strlen(left)];
 
+    req->x_ = atoi(left);
+    req->y_ = atoi(right);
+    req->op_ = mid;
+
+    return true;
 }

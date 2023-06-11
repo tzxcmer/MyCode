@@ -2,6 +2,7 @@
 #include"Task.hpp"
 #include"daemonize.hpp"
 #include"ThreadPool.hpp"
+#include"Protocol.hpp"
 
 
 #include<signal.h>
@@ -10,6 +11,41 @@
 #include<pthread.h>
 #include<assert.h>
 
+
+
+static Response calculator(const Request &req)
+{
+    Response resp;
+    switch (req.op_)
+    {
+    case '+':
+        resp.result_ = req.x_ + req.y_;
+        break;
+    case '-':
+        resp.result_ = req.x_ - req.y_;
+        break;
+    case '*':
+        resp.result_ = req.x_ * req.y_;
+        break;
+    case '/':
+        { // x_ / y_
+            if (req.y_ == 0) resp.exitCode_ = -1; // -1. 除0
+            else resp.result_ = req.x_ / req.y_;
+        }
+    break;
+    case '%':
+        { // x_ / y_
+            if (req.y_ == 0) resp.exitCode_ = -2; // -2. 模0
+            else resp.result_ = req.x_ % req.y_;
+        }
+    break;
+    default:
+        resp.exitCode_ = -3; // -3: 非法操作符
+        break;
+    }
+
+    return resp;
+} 
 
 void netCal(int sock, const std::string &clientIp, uint16_t clientPort)
 {
@@ -20,7 +56,40 @@ void netCal(int sock, const std::string &clientIp, uint16_t clientPort)
     std::string inbuffer;
     while(true)
     {
-        
+        Request req;
+        char buff[128];
+        ssize_t s = read(sock,buff,sizeof(buff) - 1);
+        if (s == 0)
+        {
+            logMessage(NOTICE, "client[%s:%d] close sock, service done", clientIp.c_str(), clientPort);
+            break;
+        }
+        else if (s < 0)
+        {
+            logMessage(WARINING, "read client[%s:%d] error, errorcode: %d, errormessage: %s",
+                       clientIp.c_str(), clientPort, errno, strerror(errno));
+            break;
+        }
+
+        buff[s] = 0;
+        inbuffer += buff;
+        std::cout<<"inbuffer: "<<inbuffer<<std::endl;
+        uint32_t packageLen = 0;
+        std::string package = decode(inbuffer,&packageLen);
+        if(packageLen == 0)
+            continue;
+        std::cout<<"package: "<<package<<std::endl;
+        if(req.deserialize(package))
+        {
+            req.debug();
+            Response resp = calculator(req);
+
+            std::string resPackage;
+            resp.serialize(&resPackage);
+            resPackage = encode(resPackage,resPackage.size());
+
+            write(sock,resPackage.c_str(),resPackage.size());
+        }
     }
 }
 
@@ -136,3 +205,9 @@ private:
     ThreadPool<Task> *tp_;
     bool quit_;
 };
+
+
+int main()
+{
+    
+}

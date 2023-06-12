@@ -10,6 +10,7 @@
 #include<sys/wait.h>
 #include<pthread.h>
 #include<assert.h>
+#include<errno.h>
 
 
 
@@ -207,7 +208,45 @@ private:
 };
 
 
-int main()
+static void Usage(std::string proc)
 {
-    
+    std::cerr << "Usage:\n\t" << proc << " port ip" << std::endl;
+    std::cerr << "example:\n\t" << proc << " 8080 127.0.0.1\n"
+              << std::endl;
+}
+
+ServerTcp *svrp;
+
+void sigHandler(int signo)
+{
+    if(signo == 3 && svrp != nullptr)
+        svrp->quitServer();
+    logMessage(DEBUG, "server quit save!");
+}
+
+int main(int argc,char* argv[])
+{
+    if(argc != 2 && argc != 3)
+    {
+        Usage(argv[0]);
+        exit(USAGE_ERR);
+    }
+
+    uint16_t port = atoi(argv[1]);
+
+    std::string ip;
+    if(argc == 3)
+    {
+        ip = argv[2];
+    }
+
+    daemonize();
+    signal(3,sigHandler);
+
+    ServerTcp svr(port,ip);
+    svr.init();
+    svrp = &svr;
+    svr.loop();
+
+    return 0;
 }

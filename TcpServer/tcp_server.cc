@@ -240,7 +240,7 @@ int main(int argc,char* argv[])
         ip = argv[2];
     }
 
-    daemonize();
+    //daemonize();
     signal(3,sigHandler);
 
     ServerTcp svr(port,ip);
@@ -250,3 +250,4 @@ int main(int argc,char* argv[])
 
     return 0;
 }
+

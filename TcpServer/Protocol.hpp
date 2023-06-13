@@ -20,7 +20,7 @@ std::string decode(std::string &in,uint32_t *len)
 {
     //确认len是否有效
     assert(len);
-    size_t pos = in.find(CRLF);
+    std::size_t pos = in.find(CRLF);
     if(pos == std::string::npos)
     {
         return "";
@@ -160,7 +160,7 @@ public:
         std::string ec = std::to_string(exitCode_);
         std::string res = std::to_string(result_);
 
-        *out += ec;
+        *out = ec;
         *out += SPACE;
         *out += res;
 #else
@@ -168,7 +168,7 @@ public:
         root["exitcode"] = exitCode_;
         root["result"] = result_;
         Json::FastWriter fw;
-        fw.write(root);
+        *out = fw.write(root);
 
 #endif
     }
@@ -187,6 +187,7 @@ public:
 
         exitCode_ = atoi(codestr.c_str());
         result_ = atoi(reststr.c_str());
+        return true;
 
 #else
         Json::Value root;
@@ -194,8 +195,8 @@ public:
         rd.parse(in,root);
         exitCode_ = root["exitcode"].asInt();
         result_ = root["result"].asInt();
-#endif
         return true;
+#endif
     }
 
      void debug()
@@ -230,3 +231,5 @@ bool makeRequest(const std::string &str,Request *req)
 
     return true;
 }
+
+

@@ -28,17 +28,70 @@ using namespace std;
 
 std::string getPath(std::string http_request)
 {
+    std::size_t pos = http_request.find(CRLF);
+    if(pos == std::string::npos) 
+        return "";
+    std::string request_line = http_request.substr(0, pos);
+    
+    std::size_t first = request_line.find(SPACE);
+    if(pos == std::string::npos) 
+        return "";
+    std::size_t second = request_line.rfind(SPACE);
+    if(pos == std::string::npos) 
+        return "";
 
+    std::string path = request_line.substr(first+SPACE_LEN, second - (first+SPACE_LEN));
+    if(path.size() == 1 && path[0] == '/')
+        path += HOME_PAGE;
+    
+    return path;
 }
 
 std::string readFile(const std::string &recource)
 {
+    std::ifstream in(recource,std::ifstream::binary);
+    if(!in.is_open())
+        return "404";
+    
+    std::string content;
+    std::string line;
+    while (std::getline(in,line))
+    {
+        content += line;
+    }
 
+    in.close();
+
+    return content;
+    
 }
 
 void handlerHttpRequest(int sock)
 {
+    char buffer[10240];
+    ssize_t s = read(sock, buffer, sizeof buffer);
+    if(s > 0) cout << buffer;
+    std::string path = getPath(buffer);
     
+    std::string recource = ROOT_PATH;
+    recource += path;
+    std::cout << recource << std::endl;
+
+    std::string html = readFile(recource);
+    std::size_t pos = recource.rfind(".");
+    std::string suffix = recource.substr(pos);
+    cout << suffix << endl;
+
+    //开始响应
+    std::string response;
+    response = "HTTP/1.0 200 OK\r\n";
+    if(suffix == ".jpg") response += "Content-Type: image/jpeg\r\n";
+    else response += "Content-Type: text/html\r\n";
+    response += ("Content-Length: " + std::to_string(html.size()) + "\r\n");
+    response += "\r\n";
+    response += html;
+
+    send(sock, response.c_str(), response.size(), 0);                           
 }
 
 

@@ -69,17 +69,59 @@ public:
 
     void start()
     {
+        char inbuffer[1024];
+        char outbuffer[1024];
 
+        while(true)
+        {
+            struct sockaddr_in peer;
+            socklen_t len = sizeof peer;
+
+            ssize_t s = recvfrom(sockfd_,inbuffer,sizeof(inbuffer)-1,0,(struct sockaddr*)&peer,&len);
+            if (s > 0)
+            {
+                inbuffer[s] = 0; //当做字符串
+            }
+            else if (s == -1)
+            {
+                logMessage(WARINING, "recvfrom: %s:%d", strerror(errno), sockfd_);
+                continue;
+            }
+
+            std::string peerIp = inet_ntoa(peer.sin_addr);
+            uint32_t peerPort = ntohs(peer.sin_port);
+            checkOnlineUser(peerIp, peerPort, peer); //如果存在，什么都不做，如果不存在，就添加
+
+            messageRoute(peerIp, peerPort,inbuffer); //消息路由
+        }
     }
 
-    void checkOnlineUser()
+    void checkOnlineUser(std::string &ip, uint32_t port, struct sockaddr_in &peer)
     {
-
+        std::string key = ip;
+        key += ":";
+        key += std::to_string(port);
+        auto iter = users.find(key);
+        if(iter == users.end())
+        {
+            users.insert({key,peer});
+        }
     }
 
-    void messageRoute()
+    void messageRoute(std::string ip, uint32_t port, std::string info)
     {
+         std::string message = "[";
+        message += ip;
+        message += ":";
+        message += std::to_string(port);
+        message += "]# ";
+        message += info;
 
+        for(auto& user : users)
+        {
+            sendto(sockfd_,message.c_str(),message.size(),0,
+            (const sockaddr*)&(user.second),sizeof user.second);
+        }
     }
 };
 

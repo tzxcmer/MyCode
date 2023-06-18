@@ -36,5 +36,35 @@ void *recverAndPrint(void *args)
 
 int main(int argc, char *argv[])
 {
+    if (argc != 3)
+    {
+        Usage(argv[0]);
+        exit(1);
+    }
+
+    std::string server_ip = argv[1];
+    uint16_t server_port = atoi(argv[2]);
+
+    int sockfd = socket(AF_INET,SOCK_STREAM,0);
+    assert(sockfd > 0);
+
+    bzero(&server, sizeof server);
+    server.sin_family = AF_INET;
+    server.sin_port = htons(server_port);
+    server.sin_addr.s_addr = inet_addr(server_ip.c_str());
+
+    pthread_t t;
+    pthread_create(&t,nullptr,recverAndPrint,(void*)&sockfd);
+    
+    std::string buffer;
+
+    while(true)
+    {
+        std::cerr << "Please Enter# ";
+        std::getline(std::cin, buffer);
+        sendto(sockfd,buffer.c_str(),buffer.size(),0,
+        (const struct sockaddr *)&server,sizeof server);
+    }
+
     return 0;
 }

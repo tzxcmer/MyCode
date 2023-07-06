@@ -27,3 +27,21 @@ static void usage(std::string process)
     cerr << "\nUsage: " << process << " port\n"
          << endl;
 }
+
+
+static void HandlerEvent(int listensock, fd_set &readfds)
+{
+
+}
+
+
+int main(int argc, char *argv[])
+{
+    if (argc != 2)
+    {
+        usage(argv[0]);
+        exit(1);
+    }
+    
+    return 0;
+}

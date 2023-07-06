@@ -23,9 +23,16 @@ class Sock{
 public:
     static const int gbacklock = 20;
 
-    static int socket()
+    static int  Socket()
     {
-
+        int listenSock = socket(PF_INET, SOCK_STREAM, 0);
+        if (listenSock < 0)
+        {
+            exit(1);
+        }
+        int opt = 1;
+        setsockopt(listenSock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
+        return listenSock;
     }
 
     static void Bind(int socket,uint16_t port)

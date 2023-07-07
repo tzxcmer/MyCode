@@ -43,5 +43,18 @@ int main(int argc, char *argv[])
         exit(1);
     }
     
+    int listensock = Sock::Socket();
+    Sock::Bind(listensock, atoi(argv[1]));
+    Sock::Listen(listensock);
+
+    for (int i = 0; i < gnum; i++)
+        fdsArray[i] = DFL;
+    fdsArray[0] = listensock;
+
+    while(true)
+    {
+        
+    }
+
     return 0;
 }

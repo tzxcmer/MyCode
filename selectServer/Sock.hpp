@@ -21,7 +21,7 @@
 
 class Sock{
 public:
-    static const int gbacklock = 20;
+    static const int gbacklog = 20;
 
     static int  Socket()
     {
@@ -37,12 +37,25 @@ public:
 
     static void Bind(int socket,uint16_t port)
     {
+        struct sockaddr_in local; // 用户栈
+        memset(&local, 0, sizeof local);
+        local.sin_family = PF_INET;
+        local.sin_port = htons(port);
+        local.sin_addr.s_addr = INADDR_ANY;
 
+        // 2.2 本地socket信息，写入sock_对应的内核区域
+        if (bind(socket, (const struct sockaddr *)&local, sizeof local) < 0)
+        {
+            exit(2);
+        }
     }
 
     static void Listen(int socket)
     {
-
+        if (listen(socket, gbacklog) < 0)
+        {
+            exit(3);
+        }
     }
 
     static int Accept(int socket, std::string *clientip, uint16_t *clientport)
